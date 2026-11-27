@@ -17,7 +17,7 @@ class ExternalEvalService(BaseModuleService):
     ACTION_RULES = {"接收报告": "已接收", "退回补充": "草稿", "转办整改": "已转办"}
     NEGATIVE_ACTIONS = []
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
+    def run_action(self, entry_id: int, action: str, remark: str | None = None) -> tuple[dict[str, Any] | None, str]:
         """执行动作，含跨模块联动。"""
         entry = self.get_entry(entry_id)
         if entry is None:

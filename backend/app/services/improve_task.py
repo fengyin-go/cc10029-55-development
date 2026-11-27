@@ -35,7 +35,7 @@ class ImproveTaskService(BaseModuleService):
 
         return super().create_entry(values)
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
+    def run_action(self, entry_id: int, action: str, remark: str | None = None) -> tuple[dict[str, Any] | None, str]:
         """执行动作，含状态推进约束。"""
         entry = self.get_entry(entry_id)
         if entry is None:

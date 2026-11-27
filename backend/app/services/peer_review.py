@@ -17,7 +17,7 @@ class PeerReviewService(BaseModuleService):
     ACTION_RULES = {"汇总评议": "已汇总", "退回评议": "草稿", "公示结果": "已公示"}
     NEGATIVE_ACTIONS = []
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
+    def run_action(self, entry_id: int, action: str, remark: str | None = None) -> tuple[dict[str, Any] | None, str]:
         """执行动作，含跨模块联动：汇总评议可关联学期目标。"""
         entry = self.get_entry(entry_id)
         if entry is None:

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.services.base import BaseModuleService
+from app.services.goal_signoff import ref_entry_id
 from app.store import store
 
 
@@ -35,7 +36,7 @@ class SemesterGoalService(BaseModuleService):
 
         return super().create_entry(values)
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
+    def run_action(self, entry_id: int, action: str, remark: str | None = None) -> tuple[dict[str, Any] | None, str]:
         """执行动作，含冲突检测。"""
         entry = self.get_entry(entry_id)
         if entry is None:
@@ -59,9 +60,48 @@ class SemesterGoalService(BaseModuleService):
             if entry.get("status") not in ("待审定", "草稿"):
                 return None, f"{self.ENTITY} {entry_id} 当前状态为'{entry.get('status')}'，不可审定"
 
+            # 主任审定：从师徒结对名单核对本学期的签认请求
+            check_error = self._check_signoffs_against_pairs(entry_id, entry)
+            if check_error:
+                return None, check_error
+
         # 废止目标：必须是已审定
         if action == "废止目标":
             if entry.get("status") != "已审定":
                 return None, f"{self.ENTITY} {entry_id} 必须先审定，才能废止"
 
         return super().run_action(entry_id, action)
+
+    @staticmethod
+    def _check_signoffs_against_pairs(entry_id: int, entry: dict[str, Any]) -> str | None:
+        """把本学期该目标的签认请求逐笔与结对名单核对，不符或改派未结时暂缓审定。"""
+        goal_ref = f"G-{entry_id}"
+        semester = str(entry.get("起始学期", "") or "").strip()
+        teacher = str(entry.get("责任教师", "") or "").strip()
+        requests = [
+            row for row in store.rows("goal_signoff")
+            if str(row.get("目标编号", "")).strip() == goal_ref
+            and str(row.get("目标学期", "")).strip() == semester
+        ]
+        takeover = [row for row in requests if row.get("status") == "待接任"]
+        if takeover:
+            return (
+                f"审定暂缓：{goal_ref} 在 {semester} 学期有 {len(takeover)} 笔签认请求"
+                f"正随结对改派待接任（如 #{takeover[0].get('id')}），"
+                f"请等新任导师接任或拒接后再审定"
+            )
+        for row in requests:
+            if row.get("status") != "已签认":
+                continue
+            pair_ref = str(row.get("结对编号", "")).strip()
+            pair = store.find("mentor_pair", ref_entry_id(pair_ref, "P") or -1)
+            signer = str(row.get("签认人", "")).strip()
+            if (pair is None
+                    or str(pair.get("指导教师", "")).strip() != signer
+                    or str(pair.get("青年教师", "")).strip() != teacher
+                    or str(pair.get("结对学期", "")).strip() != semester):
+                return (
+                    f"审定驳回：签认请求 #{row.get('id')} 与结对名单核对不符"
+                    f"（签认人 {signer} / 结对 {pair_ref or '无'}），请到师徒结对名单核实后再审定"
+                )
+        return None

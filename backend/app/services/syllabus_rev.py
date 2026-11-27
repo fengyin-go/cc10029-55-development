@@ -17,7 +17,7 @@ class SyllabusRevService(BaseModuleService):
     ACTION_RULES = {"审批修订": "已通过", "提交审批": "待审批", "否决修订": "已否决"}
     NEGATIVE_ACTIONS = []
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
+    def run_action(self, entry_id: int, action: str, remark: str | None = None) -> tuple[dict[str, Any] | None, str]:
         """执行动作，含跨模块联动：审批通过后更新相关集体备课记录。"""
         entry = self.get_entry(entry_id)
         if entry is None:

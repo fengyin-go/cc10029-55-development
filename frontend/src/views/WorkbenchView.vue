@@ -33,6 +33,10 @@
         <span>{{ field }}</span>
         <input v-model="filters[field]" :data-testid="`filter-${field}`" :placeholder="`按${field}检索`" />
       </label>
+      <label v-if="meta.viewerScoped" class="filter-item">
+        <span>查看身份</span>
+        <input v-model="viewer" data-testid="filter-viewer" placeholder="输入教师姓名，只看自己的指导事项" />
+      </label>
       <button class="btn" data-testid="query" type="submit">查询</button>
       <button class="btn ghost" data-testid="reset" type="button" @click="resetFilters">重置条件</button>
     </form>
@@ -73,7 +77,7 @@
     <div v-if="showCreate" class="modal-backdrop" data-testid="create-modal">
       <form class="modal" @submit.prevent="submitCreate">
         <h3>登记{{ meta.entity }}</h3>
-        <label v-for="field in meta.fields" :key="field" class="create-field">
+        <label v-for="field in createFieldList" :key="field" class="create-field">
           <span>{{ field }}</span>
           <input v-model="createValues[field]" :data-testid="`create-${field}`" required />
         </label>
@@ -111,7 +115,9 @@ const rows = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
+const viewer = ref('')
 const filterFields = meta.fields.slice(0, 3)
+const createFieldList = meta.createFields ?? meta.fields
 const showCreate = ref(false)
 const creating = ref(false)
 const createValues = ref<Record<string, string>>({})
@@ -132,20 +138,21 @@ const statusSummary = computed(() =>
 
 function resetFilters() {
   filters.value = {}
+  viewer.value = ''
   void reload()
 }
 
 async function exportRows() {
   errorMessage.value = ''
   try {
-    await downloadEntries(meta.key, filters.value)
+    await downloadEntries(meta.key, filters.value, viewer.value.trim())
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '导出失败'
   }
 }
 
 function openCreate() {
-  createValues.value = Object.fromEntries(meta.fields.map((field) => [field, '']))
+  createValues.value = Object.fromEntries(createFieldList.map((field) => [field, '']))
   errorMessage.value = ''
   showCreate.value = true
 }
@@ -167,8 +174,15 @@ async function submitCreate() {
 
 async function runAction(action: string, row: EntryRow) {
   errorMessage.value = ''
+  let remark: string | undefined
+  const remarkLabel = meta.actionRemarks?.[action]
+  if (remarkLabel) {
+    const input = window.prompt(`${action}：${remarkLabel}`)
+    if (input === null) return
+    remark = input.trim() || undefined
+  }
   try {
-    const result = await applyAction(meta.key, Number(row.id), action)
+    const result = await applyAction(meta.key, Number(row.id), action, remark)
     if (!result.ok) throw new Error(result.message)
     await reload()
   } catch (error) {
@@ -179,7 +193,7 @@ async function runAction(action: string, row: EntryRow) {
 async function reload() {
   errorMessage.value = ''
   try {
-    const payload = await listEntries(meta.key, filters.value)
+    const payload = await listEntries(meta.key, filters.value, viewer.value.trim())
     rows.value = payload.items
     total.value = payload.total
   } catch (error) {

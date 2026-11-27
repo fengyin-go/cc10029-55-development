@@ -17,7 +17,7 @@ class LessonPrepService(BaseModuleService):
     ACTION_RULES = {"签阅记录": "已签阅", "补充意见": "草稿", "存档记录": "已存档"}
     NEGATIVE_ACTIONS = []
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
+    def run_action(self, entry_id: int, action: str, remark: str | None = None) -> tuple[dict[str, Any] | None, str]:
         """执行动作，含跨模块联动：签阅后可触发同行评议。"""
         entry = self.get_entry(entry_id)
         if entry is None:

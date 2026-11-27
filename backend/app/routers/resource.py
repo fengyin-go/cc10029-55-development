@@ -27,6 +27,7 @@ def list_entries(
     request: Request,
     keyword: str | None = Query(default=None),
     status: str | None = Query(default=None),
+    viewer: str | None = Query(default=None),
     page: int = Query(default=1, ge=1),
     size: int = Query(default=20, ge=1, le=200),
 ) -> PageResult[dict]:
@@ -37,7 +38,8 @@ def list_entries(
         if key in service.LIST_FIELDS and value.strip()
     }
     items, total = service.list_entries(
-        filters=filters, keyword=keyword, status=status, page=page, size=size)
+        filters=filters, keyword=keyword, status=status, page=page, size=size,
+        viewer=viewer.strip() if viewer else None)
     return PageResult(items=items, total=total, page=page, size=size)
 
 
@@ -47,6 +49,7 @@ def export_entries(
     request: Request,
     keyword: str | None = Query(default=None),
     status: str | None = Query(default=None),
+    viewer: str | None = Query(default=None),
 ) -> StreamingResponse:
     service = require_service(module)
     filters = {
@@ -55,7 +58,8 @@ def export_entries(
         if key in service.LIST_FIELDS and value.strip()
     }
     items, _ = service.list_entries(
-        filters=filters, keyword=keyword, status=status, page=1, size=1_000_000)
+        filters=filters, keyword=keyword, status=status, page=1, size=1_000_000,
+        viewer=viewer.strip() if viewer else None)
     output = io.StringIO()
     output.write("\ufeff")
     writer = csv.writer(output, lineterminator="\n")
@@ -94,5 +98,6 @@ def create_entry(module: str, payload: EntryPayload) -> ActionResult:
 @router.post("/{module}/{entry_id}/actions", response_model=ActionResult)
 def run_action(module: str, entry_id: int, payload: ActionPayload) -> ActionResult:
     service = require_service(module)
-    entry, message = service.run_action(entry_id, payload.action.strip())
+    remark = payload.remark.strip() if payload.remark else None
+    entry, message = service.run_action(entry_id, payload.action.strip(), remark=remark)
     return ActionResult(ok=entry is not None, message=message, entry=entry)

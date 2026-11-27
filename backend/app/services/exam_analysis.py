@@ -17,7 +17,7 @@ class ExamAnalysisService(BaseModuleService):
     ACTION_RULES = {"审核分析": "审核通过", "退回重填": "草稿", "存档分析": "已存档"}
     NEGATIVE_ACTIONS = []
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
+    def run_action(self, entry_id: int, action: str, remark: str | None = None) -> tuple[dict[str, Any] | None, str]:
         """执行动作，含跨模块联动：审核通过时检查是否需要触发改进方案。"""
         entry = self.get_entry(entry_id)
         if entry is None:

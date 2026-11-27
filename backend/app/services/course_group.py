@@ -16,7 +16,7 @@ class CourseGroupService(BaseModuleService):
     ACTION_RULES = {"确认建组": "已建组", "调整成员": "已建组", "解散课程组": "已解散"}
     NEGATIVE_ACTIONS = []
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
+    def run_action(self, entry_id: int, action: str, remark: str | None = None) -> tuple[dict[str, Any] | None, str]:
         """执行动作。"""
         entry = self.get_entry(entry_id)
         if entry is None:

@@ -11,7 +11,7 @@
 .
 ├── frontend/                 Vue 3 + Vite + TypeScript 前端
 │   ├── src/views/WorkbenchView.vue|tsx  全部模块共享工作台
-│   ├── src/data/modules.ts              18个业务模块配置
+│   ├── src/data/modules.ts              21个业务模块配置
 │   ├── src/api/              统一请求封装
 │   └── vite.config.ts        dev server 配置（open: false）
 ├── backend/                  FastAPI（Python） 后端
@@ -64,7 +64,8 @@ npm run dev
 | 大纲修订 | `syllabus_rev` | 修订稿 | 课程名称、修订章节、原内容 |
 | 教学成果申报 | `teach_award` | 成果申报 | 成果名称、完成团队、成果概要 |
 | 集体备课 | `lesson_prep` | 备课记录 | 备课章节、主备教师、参与教师 |
-| 师徒结对 | `mentor_pair` | 结对记录 | 指导教师、青年教师、结对目标 |
+| 师徒结对 | `mentor_pair` | 结对记录 | 指导教师、青年教师、结对目标、结对学期 |
+| 导师签认 | `goal_signoff` | 签认请求 | 目标编号、目标学期、指导教师、结对编号、签认人 |
 | 试卷分析 | `exam_analysis` | 分析记录 | 考试名称、任课教师、参考人数 |
 | 排课编排 | `class_schedule` | 排课单 | 课程名称、授课教师、上课时间 |
 | 教学资源申请 | `resource_apply` | 资源申请 | 申请资源、用途说明、使用时间 |

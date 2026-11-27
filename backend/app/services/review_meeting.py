@@ -17,7 +17,7 @@ class ReviewMeetingService(BaseModuleService):
     ACTION_RULES = {"签认纪要": "已签认", "提出异议": "草稿", "分发给教师": "已分发"}
     NEGATIVE_ACTIONS = []
 
-    def run_action(self, entry_id: int, action: str) -> tuple[dict[str, Any] | None, str]:
+    def run_action(self, entry_id: int, action: str, remark: str | None = None) -> tuple[dict[str, Any] | None, str]:
         """执行动作，含跨模块联动：分发时创建关联诊改任务。"""
         entry = self.get_entry(entry_id)
         if entry is None:

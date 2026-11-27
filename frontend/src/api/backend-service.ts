@@ -7,9 +7,11 @@ export { moduleMeta }
 export async function listEntries(
   key: string,
   filters: Record<string, string> = {},
+  viewer = '',
 ): Promise<PageResult> {
-  const query = new URLSearchParams(filters).toString()
-  const response = await request(`/api/${key}?${query}`)
+  const params = new URLSearchParams(filters)
+  if (viewer) params.set('viewer', viewer)
+  const response = await request(`/api/${key}?${params.toString()}`)
   if (!response.ok) throw new Error('业务数据读取失败')
   return await response.json()
 }
@@ -22,6 +24,10 @@ export async function createEntry(
     method: 'POST',
     body: JSON.stringify({ values }),
   })
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { detail?: string } | null
+    throw new Error(body?.detail ?? `登记失败（${response.status}）`)
+  }
   return await response.json()
 }
 
@@ -29,10 +35,11 @@ export async function runAction(
   key: string,
   id: number,
   action: string,
+  remark?: string,
 ): Promise<ActionResult> {
   const response = await request(`/api/${key}/${id}/actions`, {
     method: 'POST',
-    body: JSON.stringify({ action }),
+    body: JSON.stringify(remark ? { action, remark } : { action }),
   })
   return await response.json()
 }
@@ -40,9 +47,11 @@ export async function runAction(
 export async function downloadEntries(
   key: string,
   filters: Record<string, string> = {},
+  viewer = '',
 ): Promise<void> {
-  const query = new URLSearchParams(filters).toString()
-  const response = await request(`/api/${key}/export?${query}`)
+  const params = new URLSearchParams(filters)
+  if (viewer) params.set('viewer', viewer)
+  const response = await request(`/api/${key}/export?${params.toString()}`)
   if (!response.ok) throw new Error('业务数据导出失败')
   const url = URL.createObjectURL(await response.blob())
   const anchor = document.createElement('a')
